@@ -1,6 +1,11 @@
 <h2>Drag / drop the item</h2>
-<ul id="items">
-	<li *ngFor='let kpi of kpis'>
-    {{kpi}}
-  </li>
-</ul>
+<div class="row">
+  <div class="col-md-3">
+    <ul id="items" class="list-group">
+      <li *ngFor='let kpi of kpis' class="list-group-item">
+        <i class="fa fa-bars my-handle"></i>
+        {{kpi}}
+      </li>
+    </ul>
+  </div>
+</div>
