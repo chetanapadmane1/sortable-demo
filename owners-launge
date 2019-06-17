@@ -7,94 +7,81 @@ import { HttpClientService } from 'app/services/http-client.service';
 import { SortableKpisService } from 'app/services/sortable-kpis.service';
 import { CalculatorPreferences, UserPreferences } from 'app/model/UserPreferences';
 import { CalculatorAnalytics } from 'app/model/CalculatorAnalytics';
+import { AnalyticsKpi } from 'app/model/AnalyticsKpi';
 @Component({
   selector: 'app-owners-lounge',
   templateUrl: './owners-lounge.component.html',
   styleUrls: ['./owners-lounge.component.scss']
 })
-<<<<<<< Updated upstream
 export class OwnersLoungeComponent implements OnInit {
   ownerCalculators: CalculatorAnalytics[];
-=======
-export class OwnersLoungeComponent {
-  ownerCalculators: CalculatorAnalytics[] = [];
->>>>>>> Stashed changes
   ownerId: string;
   isCalculatorsListVisible: boolean;
   analyticsContents: AnalyticsContent;
   userPreferences: UserPreferences;
   constructor(private cps: ContentProviderService, private ads: AnalyticsDataService, private sks: SortableKpisService,
     private httpClientService: HttpClientService) {
-<<<<<<< Updated upstream
-
-    localStorage.userPreferences = JSON.stringify({
-      userId: this.ownerId,
-      calculators: [{ segmentId: 's300006522_5c8abdfa07bd5d3c614e8030' }]
-    });
-
+    this.ownerId = this.ads.ownerId;
     // @TODO
-    // this.httpClientService.get(`preferences/calculator`, [{ key: '', value: '' }]).subscribe(response => {
-    //   localStorage.userPreferences = JSON.stringify(response);
-    // });
-    this.userPreferences = JSON.parse(localStorage.userPreferences);
-    this.cps.getContentType('calculator_card').then((result) => {
-      this.ownerCalculators = this.ads.mapCalculators(result);
-    });
-
-  }
-  ngOnInit() {
-  }
-=======
-    // @TODO this would be replaced in future
-    this.ownerId = '785671';
-
-
-
-    // @TODO
-    this.httpClientService.get('/preference/calculator', [{ key: 'userId', value: '565423' }]).subscribe(response => {
-      console.log('response', response);
+    this.httpClientService.get('/preference/calculator', [{ key: 'userId', value: this.ownerId }]).subscribe(response => {
       if (response === null) {
-        console.log('preferences not available');
-        localStorage.userPreferences = JSON.stringify({
-          userId: this.ownerId,
-          calculators: []
-        });
+        localStorage.userPreferences = JSON.stringify({ userId: this.ownerId, calculators: [] });
       } else {
         localStorage.userPreferences = JSON.stringify(response);
       }
       this.userPreferences = JSON.parse(localStorage.userPreferences);
     });
-
     this.cps.getContentType('calculator_card').then((result) => {
-      console.log('calc');
-      this.mapCalculators(result);
+      this.ownerCalculators = this.ads.mapCalculators(result);
       if (this.userPreferences.calculators.length > 0) {
         this.displayCalculatorsAsPerPreferences();
       }
+      this.ownerCalculators[0].isVisible = true;
     });
-
     this.analyticsContents = this.ads.analyticsContents;
   }
 
-  displayCalculatorsAsPerPreferences() {
-    console.log('-->>user pref : ', this.ownerCalculators);
-    const sortedCalculators: CalculatorAnalytics[] = [];
-    for (const calcPreferences of this.userPreferences.calculators) {
-      for (const calculator of this.ownerCalculators) {
-        console.log('.....>>>')
+  ngOnInit() {
+  }
 
-        if (calculator.segmentId === calcPreferences.segmentId) {
-          const swappableCalculator = calculator;
-          console.log('.....', calcPreferences);
-          if (calcPreferences.kpisList) {
-            console.log('kpi preferences found');
+  displayCalculatorsAsPerPreferences() {
+    const sortedCalculators: CalculatorAnalytics[] = [];
+    if (this.userPreferences.calculators.length === this.ownerCalculators.length) {
+      for (const calcPreferences of this.userPreferences.calculators) {
+        for (const calculator of this.ownerCalculators) {
+          if (calculator.segmentId === calcPreferences.segmentId) {
+            const swappableCalculator = calculator;
+            //@ todo for kpi prefernces
+            if (calcPreferences.kpisList) {
+              console.log('segment id:', calculator.segmentId);
+              this.setInitialKpiPreferences(calculator.kpis, calcPreferences.kpisList);
+            }
+            sortedCalculators.push(swappableCalculator);
           }
         }
       }
     }
+    this.ownerCalculators = sortedCalculators;
   }
 
->>>>>>> Stashed changes
+  setInitialKpiPreferences(kpis, kpiPreferences) {
+    console.log('setInitialKpiPreferences');
+    console.log('kpi list : ', kpis);
+    console.log('kpi pref :', kpiPreferences);
+    const sortedKpis: AnalyticsKpi[] = [];
+    for (const kpiPref of kpiPreferences) {
+      for (const kpi of kpis) {
+        if ((kpi.title === kpiPref.title)) {
+          const swapableKpi = kpi;
+          if (kpiPref.isVisible) {
+            swapableKpi.isVisible = kpiPref.isVisible;
+          }
+          sortedKpis.push(swapableKpi);
+        }
+      }
+    }
+    kpis = sortedKpis;
+  }
   mapCalculators(calculatorEntries: any[]) {
     // @TODO will removed after owner mapping
     const calculatorEntry = calculatorEntries.splice(0, 5);
@@ -122,6 +109,7 @@ export class OwnersLoungeComponent {
     this.ownerCalculators.map((calculator) => {
       if (calculator.isVisible === true) {
         calculator.isVisible = false;
+        return calculator;
       }
     });
   }
