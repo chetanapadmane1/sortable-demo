@@ -1,0 +1,153 @@
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AnalyticsContent } from 'app/model/AnalyticsContent';
+import { SortableElement } from 'app/model/SortableElement';
+import { AnalyticsDataService } from 'app/services/analytics-data.service';
+import { ContentProviderService } from 'app/services/content-provider.service';
+import { HttpClientService } from 'app/services/http-client.service';
+import { SortableKpisService } from 'app/services/sortable-kpis.service';
+import { CalculatorPreferences, UserPreferences } from 'app/model/UserPreferences';
+import { CalculatorAnalytics } from 'app/model/CalculatorAnalytics';
+@Component({
+  selector: 'app-owners-lounge',
+  templateUrl: './owners-lounge.component.html',
+  styleUrls: ['./owners-lounge.component.scss']
+})
+<<<<<<< Updated upstream
+export class OwnersLoungeComponent implements OnInit {
+  ownerCalculators: CalculatorAnalytics[];
+=======
+export class OwnersLoungeComponent {
+  ownerCalculators: CalculatorAnalytics[] = [];
+>>>>>>> Stashed changes
+  ownerId: string;
+  isCalculatorsListVisible: boolean;
+  analyticsContents: AnalyticsContent;
+  userPreferences: UserPreferences;
+  constructor(private cps: ContentProviderService, private ads: AnalyticsDataService, private sks: SortableKpisService,
+    private httpClientService: HttpClientService) {
+<<<<<<< Updated upstream
+
+    localStorage.userPreferences = JSON.stringify({
+      userId: this.ownerId,
+      calculators: [{ segmentId: 's300006522_5c8abdfa07bd5d3c614e8030' }]
+    });
+
+    // @TODO
+    // this.httpClientService.get(`preferences/calculator`, [{ key: '', value: '' }]).subscribe(response => {
+    //   localStorage.userPreferences = JSON.stringify(response);
+    // });
+    this.userPreferences = JSON.parse(localStorage.userPreferences);
+    this.cps.getContentType('calculator_card').then((result) => {
+      this.ownerCalculators = this.ads.mapCalculators(result);
+    });
+
+  }
+  ngOnInit() {
+  }
+=======
+    // @TODO this would be replaced in future
+    this.ownerId = '785671';
+
+
+
+    // @TODO
+    this.httpClientService.get('/preference/calculator', [{ key: 'userId', value: '565423' }]).subscribe(response => {
+      console.log('response', response);
+      if (response === null) {
+        console.log('preferences not available');
+        localStorage.userPreferences = JSON.stringify({
+          userId: this.ownerId,
+          calculators: []
+        });
+      } else {
+        localStorage.userPreferences = JSON.stringify(response);
+      }
+      this.userPreferences = JSON.parse(localStorage.userPreferences);
+    });
+
+    this.cps.getContentType('calculator_card').then((result) => {
+      console.log('calc');
+      this.mapCalculators(result);
+      if (this.userPreferences.calculators.length > 0) {
+        this.displayCalculatorsAsPerPreferences();
+      }
+    });
+
+    this.analyticsContents = this.ads.analyticsContents;
+  }
+
+  displayCalculatorsAsPerPreferences() {
+    console.log('-->>user pref : ', this.ownerCalculators);
+    const sortedCalculators: CalculatorAnalytics[] = [];
+    for (const calcPreferences of this.userPreferences.calculators) {
+      for (const calculator of this.ownerCalculators) {
+        console.log('.....>>>')
+
+        if (calculator.segmentId === calcPreferences.segmentId) {
+          const swappableCalculator = calculator;
+          console.log('.....', calcPreferences);
+          if (calcPreferences.kpisList) {
+            console.log('kpi preferences found');
+          }
+        }
+      }
+    }
+  }
+
+>>>>>>> Stashed changes
+  mapCalculators(calculatorEntries: any[]) {
+    // @TODO will removed after owner mapping
+    const calculatorEntry = calculatorEntries.splice(0, 5);
+    Promise.all(calculatorEntry.map((calculator) => {
+      this.ads.fetchData(this.analyticsContents.daysCount, calculator.segment_id).then((result) => {
+      });
+    }));
+    this.ownerCalculators = calculatorEntry.map(calculator => {
+      return {
+        ownerId: this.ownerId,
+        segmentId: calculator.segment_id,
+        title: calculator.title,
+        index: calculator.index,
+        uid: calculator.uid,
+        kpis: [...this.analyticsContents.kpis]
+      };
+    });
+    this.ownerCalculators[0].isVisible = true;
+  }
+
+
+  showCalculatorsList() {
+    window.scrollTo(0, 0);
+    this.isCalculatorsListVisible = !this.isCalculatorsListVisible;
+    this.ownerCalculators.map((calculator) => {
+      if (calculator.isVisible === true) {
+        calculator.isVisible = false;
+      }
+    });
+  }
+
+  updateCalculatorsSequence(updatedSortingList: SortableElement[]) {
+    const localUserPreferences: UserPreferences = JSON.parse(localStorage.userPreferences);
+    this.userPreferences.calculators = [];
+    for (const listItem of updatedSortingList) {
+      const calcPreferences: CalculatorPreferences = { segmentId: listItem.segmentId };
+      if (localUserPreferences.calculators) {
+        localUserPreferences.calculators.map(calculatorPreferences => {
+          if (listItem.segmentId === calculatorPreferences.segmentId) {
+            if (calculatorPreferences.kpisList) {
+              calcPreferences.kpisList = calculatorPreferences.kpisList;
+            }
+          }
+        });
+      }
+      this.userPreferences.calculators.push(calcPreferences);
+    }
+    localStorage.userPreferences = JSON.stringify(this.userPreferences);
+    this.httpClientService.post('/preference/calculator', this.userPreferences).subscribe(
+      response => {
+        console.log('Updated preferences successfully!');
+      }, error => {
+        console.error(error);
+      });
+  }
+}
